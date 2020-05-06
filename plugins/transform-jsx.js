@@ -38,8 +38,16 @@ module.exports = function({ types: t }) {
       }
     },
     Program: {
-      exit(path, state) {
-  
+      enter(path, state) {
+        let key = 0
+        path.traverse({
+          JSXElement: {
+            enter() {
+              key = 1
+            }
+          }
+        })
+        if (key === 0) return
         const hasImportedVue = (path) => {
           return path.node.body.filter(p => p.type === 'ImportDeclaration').some(p => p.source.value == 'vue')
         }
@@ -56,7 +64,7 @@ module.exports = function({ types: t }) {
             const vueSource = path.node.body
               .filter(p => p.type === 'ImportDeclaration')
               .find(p => p.source.value == 'vue')
-            const key = vueSource.specifiers.map(s => s.imported.name)
+            const key = vueSource.specifiers.map(s => s.imported && s.imported.name)
             if (key.includes('h')) {
             } else {
               vueSource.specifiers.unshift(t.ImportSpecifier(t.identifier('h'), t.identifier('h')))
